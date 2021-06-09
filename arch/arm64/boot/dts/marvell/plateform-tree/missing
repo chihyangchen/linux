@@ -1,0 +1,20 @@
+armada-cp110.dtsi:                      compatible = generic-uio;
+
+armada-cp110.dtsi:                      compatible = marvell,mvmdio-uio;
+armada-cp110.dtsi:                      compatible = syscon, simple-mfd;
+armada-cp110.dtsi:                      compatible = marvell,uio-xor-v2;
+armada-cp110.dtsi:                      compatible = marvell,armada-8k-rng
+armada-cp110.dtsi:                      compatible = marvell,uio-sam
+armada-cp110.dtsi:              compatible = marvell,pcinet-target
+cn9130-crb.dtsi:        compatible = marvell,cn9130
+cn9130.dtsi:    compatible = marvell,cn9130, marvell,armada-ap807-quad
+armada-ap80x.dtsi:      compatible = marvell,armada-ap806
+armada-ap80x.dtsi:                              compatible = arm,cortex-a72-pmu
+armada-ap80x.dtsi:                              compatible = marvell,coresight-axim
+armada-ap80x.dtsi:                              compatible = marvell,armada-7k-xor
+armada-ap80x.dtsi:                              compatible = marvell,mv-xor-v2-copy-offload
+armada-ap80x.dtsi:                              compatible = marvell,uio-xor-v2
+armada-ap80x.dtsi:                              compatible = marvell,musdk-cma
+armada-ap80x.dtsi:                              compatible = marvell,armada-giu-nic
+armada-ap80x.dtsi:                              compatible = marvell,armada-giu-nic-uio
+armada-ap807-quad.dtsi: compatible = marvell,armada-ap807-quad, marvell,armada-ap807;

@@ -1,0 +1,3 @@
+armada-cp110.dtsi:                      compatible = marvell,armada-a8k-tdm
+armada-cp110.dtsi:              compatible = marvell,armada-pcie-ep, snps,dw-pcie
+armada-cp110.dtsi:              compatible = marvell,pci-ep-uio

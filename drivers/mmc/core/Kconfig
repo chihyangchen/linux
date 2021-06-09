@@ -89,3 +89,10 @@ config MMC_CRYPTO
 	  Enabling this makes it possible for the kernel to use the crypto
 	  capabilities of the MMC device (if present) to perform crypto
 	  operations on data being transferred to/from the device.
+config MMC_OOPS
+	bool "Log panic/oops to a MMC buffer"
+	depends on OF
+	help
+		This enables panic and oops messages to be logged to a circular
+		buffer in a MMC sectors where it can be read back at some
+		later point.

@@ -538,4 +538,15 @@ config EDAC_DMC520
 	  Support for error detection and correction on the
 	  SoCs with ARM DMC-520 DRAM controller.
 
+config EDAC_ARMADA_AP80X
+	tristate "Marvell Armada AP80x EDAC"
+	depends on ARCH_MVEBU
+	help
+		Support for error detection and correction on Marvell
+		Armada AP80x-based SoCs.
+		Note that the EDAC memory controller driver requires
+		memory modules with ECC.
+
 endif # EDAC
+
+

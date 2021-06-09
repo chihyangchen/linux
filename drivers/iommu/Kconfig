@@ -278,7 +278,7 @@ config ARM_SMMU_LEGACY_DT_BINDINGS
 config ARM_SMMU_DISABLE_BYPASS_BY_DEFAULT
 	bool "Default to disabling bypass on ARM SMMU v1 and v2"
 	depends on ARM_SMMU
-	default y
+#	default y
 	help
 	  Say Y here to (by default) disable bypass streams such that
 	  incoming transactions from devices that are not attached to

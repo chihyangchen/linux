@@ -17,11 +17,10 @@
 
 		cpu0: cpu@0 {
 			device_type = "cpu";
-			compatible = "arm,cortex-a72";
+			compatible = "arm,cortex-a72", "arm,armv8";
 			reg = <0x000>;
 			enable-method = "psci";
 			#cooling-cells = <2>;
-			clocks = <&cpu_clk 0>;
 			i-cache-size = <0xc000>;
 			i-cache-line-size = <64>;
 			i-cache-sets = <256>;
@@ -32,11 +31,10 @@
 		};
 		cpu1: cpu@1 {
 			device_type = "cpu";
-			compatible = "arm,cortex-a72";
+			compatible = "arm,cortex-a72", "arm,armv8";
 			reg = <0x001>;
 			enable-method = "psci";
 			#cooling-cells = <2>;
-			clocks = <&cpu_clk 0>;
 			i-cache-size = <0xc000>;
 			i-cache-line-size = <64>;
 			i-cache-sets = <256>;
@@ -55,7 +53,70 @@
 	};
 
 	thermal-zones {
-		/delete-node/ ap-thermal-cpu2;
-		/delete-node/ ap-thermal-cpu3;
+		ap_thermal_cpu0: ap-thermal-cpu0 {
+			polling-delay-passive = <1000>;
+			polling-delay = <1000>;
+
+			thermal-sensors = <&ap_thermal 1>;
+
+			trips {
+				cpu0_hot: cpu0-hot {
+					temperature = <85000>;
+					hysteresis = <2000>;
+					type = "passive";
+				};
+				cpu0_emerg: cpu0-emerg {
+					temperature = <95000>;
+					hysteresis = <2000>;
+					type = "passive";
+				};
+			};
+
+			cooling-maps {
+				map0_hot: map0-hot {
+					trip = <&cpu0_hot>;
+					cooling-device = <&cpu0 1 2>,
+						<&cpu1 1 2>;
+				};
+				map0_emerg: map0-ermerg {
+					trip = <&cpu0_emerg>;
+					cooling-device = <&cpu0 3 3>,
+						<&cpu1 3 3>;
+				};
+			};
+		};
+
+		ap_thermal_cpu1: ap-thermal-cpu1 {
+			polling-delay-passive = <1000>;
+			polling-delay = <1000>;
+
+			thermal-sensors = <&ap_thermal 2>;
+
+			trips {
+				cpu1_hot: cpu1-hot {
+					temperature = <85000>;
+					hysteresis = <2000>;
+					type = "passive";
+				};
+				cpu1_emerg: cpu1-emerg {
+					temperature = <95000>;
+					hysteresis = <2000>;
+					type = "passive";
+				};
+			};
+
+			cooling-maps {
+				map1_hot: map1-hot {
+					trip = <&cpu1_hot>;
+					cooling-device = <&cpu0 1 2>,
+						<&cpu1 1 2>;
+				};
+				map1_emerg: map1-emerg {
+					trip = <&cpu1_emerg>;
+					cooling-device = <&cpu0 3 3>,
+						<&cpu1 3 3>;
+				};
+			};
+		};
 	};
 };
