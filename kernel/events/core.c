@@ -7,7 +7,7 @@
  *  Copyright (C) 2008-2011 Red Hat, Inc., Peter Zijlstra
  *  Copyright  ©  2009 Paul Mackerras, IBM Corp. <paulus@au1.ibm.com>
  */
-
+#include <linux/kern_levels.h>
 #include <linux/fs.h>
 #include <linux/mm.h>
 #include <linux/cpu.h>
@@ -58,6 +58,8 @@
 #include "internal.h"
 
 #include <asm/irq_regs.h>
+
+#define young 1
 
 typedef int (*remote_function_f)(void *);
 
@@ -11218,8 +11220,12 @@ static struct pmu *perf_init_event(struct perf_event *event)
 	if (event->parent && event->parent->pmu) {
 		pmu = event->parent->pmu;
 		ret = perf_try_init_event(pmu, event);
-		if (!ret)
+		if (!ret){
+				#if young
+			printk("Young: file: %s, function: %s line: %d\n",__FILE__, __FUNCTION__, __LINE__);
+			#endif
 			goto unlock;
+		}
 	}
 
 	/*
@@ -11243,36 +11249,60 @@ again:
 	rcu_read_unlock();
 	if (pmu) {
 		if (event->attr.type != type && type != PERF_TYPE_RAW &&
-		    !(pmu->capabilities & PERF_PMU_CAP_EXTENDED_HW_TYPE))
-			goto fail;
+		    !(pmu->capabilities & PERF_PMU_CAP_EXTENDED_HW_TYPE)){
+				#if young
+				printk("Young: file: %s, function: %s line: %d\n",__FILE__, __FUNCTION__, __LINE__);
+				#endif	
+				goto fail;
+			}
 
 		ret = perf_try_init_event(pmu, event);
 		if (ret == -ENOENT && event->attr.type != type && !extended_type) {
 			type = event->attr.type;
+			#if young
+			printk("Young: file: %s, function: %s line: %d\n",__FILE__, __FUNCTION__, __LINE__);
+			#endif	
 			goto again;
 		}
 
-		if (ret)
+		if (ret){
+		#if young
+			printk("Young: file: %s, function: %s line: %d\n",__FILE__, __FUNCTION__, __LINE__);
+		#endif		
 			pmu = ERR_PTR(ret);
-
+		}
+		#if young
+			printk("Young: file: %s, function: %s line: %d\n",__FILE__, __FUNCTION__, __LINE__);
+		#endif
 		goto unlock;
 	}
 
 	list_for_each_entry_rcu(pmu, &pmus, entry, lockdep_is_held(&pmus_srcu)) {
 		ret = perf_try_init_event(pmu, event);
-		if (!ret)
+		if (!ret){
+			#if young
+			printk("Young: file: %s, function: %s line: %d\n",__FILE__, __FUNCTION__, __LINE__);
+			#endif	
 			goto unlock;
-
+		}
 		if (ret != -ENOENT) {
 			pmu = ERR_PTR(ret);
+			#if young
+			printk("Young: file: %s, function: %s line: %d\n",__FILE__, __FUNCTION__, __LINE__);
+			#endif		
 			goto unlock;
 		}
 	}
 fail:
+		#if young
+			printk("Young: file: %s, function: %s line: %d\n",__FILE__, __FUNCTION__, __LINE__);
+		#endif
 	pmu = ERR_PTR(-ENOENT);
 unlock:
 	srcu_read_unlock(&pmus_srcu, idx);
-
+		#if young
+			printk("Young: file: %s, function: %s line: %d\n",__FILE__, __FUNCTION__, __LINE__);
+		#endif
 	return pmu;
 }
 
@@ -11417,10 +11447,17 @@ perf_event_alloc(struct perf_event_attr *attr, int cpu,
 	int node;
 
 	if ((unsigned)cpu >= nr_cpu_ids) {
-		if (!task || cpu != -1)
+		if (!task || cpu != -1){
+			#if young
+			printk("Young: file: %s, function: %s line: %d\n",__FILE__, __FUNCTION__, __LINE__);
+			#endif
 			return ERR_PTR(-EINVAL);
+		}
 	}
 	if (attr->sigtrap && !task) {
+		#if young
+		printk("Young: file: %s, function: %s line: %d\n",__FILE__, __FUNCTION__, __LINE__);
+		#endif		
 		/* Requires a task: avoid signalling random tasks. */
 		return ERR_PTR(-EINVAL);
 	}
@@ -11428,9 +11465,12 @@ perf_event_alloc(struct perf_event_attr *attr, int cpu,
 	node = (cpu >= 0) ? cpu_to_node(cpu) : -1;
 	event = kmem_cache_alloc_node(perf_event_cache, GFP_KERNEL | __GFP_ZERO,
 				      node);
-	if (!event)
+	if (!event){
+		#if young
+		printk("Young: file: %s, function: %s line: %d\n",__FILE__, __FUNCTION__, __LINE__);
+		#endif		
 		return ERR_PTR(-ENOMEM);
-
+	}
 	/*
 	 * Single events are their own group leaders, with an
 	 * empty sibling list:
@@ -11531,8 +11571,12 @@ perf_event_alloc(struct perf_event_attr *attr, int cpu,
 	 * We currently do not support PERF_SAMPLE_READ on inherited events.
 	 * See perf_output_read().
 	 */
-	if (attr->inherit && (attr->sample_type & PERF_SAMPLE_READ))
+	if (attr->inherit && (attr->sample_type & PERF_SAMPLE_READ)){
+	#if young
+	printk("Young: file: %s, function: %s line: %d\n",__FILE__, __FUNCTION__, __LINE__);
+	#endif	
 		goto err_ns;
+	}
 
 	if (!has_branch_stack(event))
 		event->attr.branch_sample_type = 0;
@@ -11540,6 +11584,9 @@ perf_event_alloc(struct perf_event_attr *attr, int cpu,
 	pmu = perf_init_event(event);
 	if (IS_ERR(pmu)) {
 		err = PTR_ERR(pmu);
+	#if young
+	printk("Young: file: %s, function: %s line: %d\n",__FILE__, __FUNCTION__, __LINE__);
+	#endif	
 		goto err_ns;
 	}
 
@@ -11549,31 +11596,47 @@ perf_event_alloc(struct perf_event_attr *attr, int cpu,
 	 */
 	if (pmu->task_ctx_nr == perf_invalid_context && cgroup_fd != -1) {
 		err = -EINVAL;
+	#if young
+	printk("Young: file: %s, function: %s line: %d\n",__FILE__, __FUNCTION__, __LINE__);
+	#endif		
 		goto err_pmu;
 	}
 
 	if (event->attr.aux_output &&
 	    !(pmu->capabilities & PERF_PMU_CAP_AUX_OUTPUT)) {
 		err = -EOPNOTSUPP;
+	#if young
+	printk("Young: file: %s, function: %s line: %d\n",__FILE__, __FUNCTION__, __LINE__);
+	#endif
 		goto err_pmu;
 	}
 
 	if (cgroup_fd != -1) {
 		err = perf_cgroup_connect(cgroup_fd, event, attr, group_leader);
-		if (err)
+		if (err){
+		#if young
+			printk("Young: file: %s, function: %s line: %d\n",__FILE__, __FUNCTION__, __LINE__);
+		#endif		
 			goto err_pmu;
+		}
 	}
 
 	err = exclusive_event_init(event);
-	if (err)
+	if (err){
+	#if young
+	printk("Young: file: %s, function: %s line: %d\n",__FILE__, __FUNCTION__, __LINE__);
+	#endif	
 		goto err_pmu;
-
+	}
 	if (has_addr_filter(event)) {
 		event->addr_filter_ranges = kcalloc(pmu->nr_addr_filters,
 						    sizeof(struct perf_addr_filter_range),
 						    GFP_KERNEL);
 		if (!event->addr_filter_ranges) {
 			err = -ENOMEM;
+		#if young
+		printk("Young: file: %s, function: %s line: %d\n",__FILE__, __FUNCTION__, __LINE__);
+		#endif			
 			goto err_per_task;
 		}
 
@@ -11598,15 +11661,22 @@ perf_event_alloc(struct perf_event_attr *attr, int cpu,
 	if (!event->parent) {
 		if (event->attr.sample_type & PERF_SAMPLE_CALLCHAIN) {
 			err = get_callchain_buffers(attr->sample_max_stack);
-			if (err)
+			if (err){
+					#if young
+					printk("Young: file: %s, function: %s line: %d\n",__FILE__, __FUNCTION__, __LINE__);
+					#endif
 				goto err_addr_filters;
+			}
 		}
 	}
 
 	err = security_perf_event_alloc(event);
-	if (err)
+	if (err){
+		#if young
+	printk("Young: file: %s, function: %s line: %d\n",__FILE__, __FUNCTION__, __LINE__);
+	#endif	
 		goto err_callchain_buffer;
-
+	}
 	/* symmetric to unaccount_event() in _free_event() */
 	account_event(event);
 
@@ -12394,6 +12464,9 @@ perf_event_create_kernel_counter(struct perf_event_attr *attr, int cpu,
 	event = perf_event_alloc(attr, cpu, task, NULL, NULL,
 				 overflow_handler, context, -1);
 	if (IS_ERR(event)) {
+	#if young
+	printk("Young: file: %s, function: %s line: %d\n",__FILE__, __FUNCTION__, __LINE__);
+	#endif	
 		err = PTR_ERR(event);
 		goto err;
 	}
@@ -12407,6 +12480,9 @@ perf_event_create_kernel_counter(struct perf_event_attr *attr, int cpu,
 	ctx = find_get_context(event->pmu, task, event);
 	if (IS_ERR(ctx)) {
 		err = PTR_ERR(ctx);
+	#if young
+	printk("Young: file: %s, function: %s line: %d\n",__FILE__, __FUNCTION__, __LINE__);
+	#endif		
 		goto err_free;
 	}
 
@@ -12414,6 +12490,9 @@ perf_event_create_kernel_counter(struct perf_event_attr *attr, int cpu,
 	mutex_lock(&ctx->mutex);
 	if (ctx->task == TASK_TOMBSTONE) {
 		err = -ESRCH;
+	#if young
+	printk("Young: file: %s, function: %s line: %d\n",__FILE__, __FUNCTION__, __LINE__);
+	#endif		
 		goto err_unlock;
 	}
 
@@ -12428,12 +12507,18 @@ perf_event_create_kernel_counter(struct perf_event_attr *attr, int cpu,
 			container_of(ctx, struct perf_cpu_context, ctx);
 		if (!cpuctx->online) {
 			err = -ENODEV;
+			#if young
+			printk("Young: file: %s, function: %s line: %d\n",__FILE__, __FUNCTION__, __LINE__);
+			#endif
 			goto err_unlock;
 		}
 	}
 
 	if (!exclusive_event_installable(event, ctx)) {
 		err = -EBUSY;
+		#if young
+		printk("Young: file: %s, function: %s line: %d\n",__FILE__, __FUNCTION__, __LINE__);
+		#endif
 		goto err_unlock;
 	}
 

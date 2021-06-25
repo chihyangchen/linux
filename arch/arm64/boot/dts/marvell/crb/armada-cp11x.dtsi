@@ -51,7 +51,7 @@
 	interrupt-parent = <&CP11X_LABEL(icu_nsr)>;
 	ranges;
 
-	config-space@CP11X_BASE {
+	CP11X_LABEL(config_space):	config-space@CP11X_BASE {
 		#address-cells = <1>;
 		#size-cells = <1>;
 		compatible = "simple-bus";
@@ -68,7 +68,7 @@
 			marvell,system-controller = <&CP11X_LABEL(syscon0)>;
 			status = "disabled";
 			dma-coherent;
-
+		//	cm3-mem = <&CP11X_LABEL(cm3_sram)>;/*Young*/
 			CP11X_LABEL(eth0): eth0 {
 				interrupts = <39 IRQ_TYPE_LEVEL_HIGH>,
 					<43 IRQ_TYPE_LEVEL_HIGH>,
@@ -342,12 +342,10 @@
 
 			sata-port@0 {
 				reg = <0>;
-				satus = "disabled";/*Young 4.14 armada-cp110.dtsi*/
 			};
 
 			sata-port@1 {
 				reg = <1>;
-				satus = "disabled";/*Young 21_0624 from 4.14 armada-cp110.dtsi*/
 			};
 		};
 

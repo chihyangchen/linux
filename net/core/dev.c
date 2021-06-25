@@ -6757,8 +6757,9 @@ out:
 EXPORT_SYMBOL(napi_busy_loop);
 
 #endif /* CONFIG_NET_RX_BUSY_POLL */
-
-static void napi_hash_add(struct napi_struct *napi)
+/*Young 21_0618 remove the static*/
+//static void napi_hash_add(struct napi_struct *napi)
+void napi_hash_add(struct napi_struct *napi)
 {
 	if (test_bit(NAPI_STATE_NO_BUSY_POLL, &napi->state))
 		return;
@@ -6777,11 +6778,14 @@ static void napi_hash_add(struct napi_struct *napi)
 
 	spin_unlock(&napi_hash_lock);
 }
-
+/*Young 21_0618 add the EXPORT_SYMBOL(napi_hash_add)*/
+EXPORT_SYMBOL(napi_hash_add);
 /* Warning : caller is responsible to make sure rcu grace period
  * is respected before freeing memory containing @napi
  */
-static void napi_hash_del(struct napi_struct *napi)
+/*Young 21_0617 make it not be static*/
+void napi_hash_del(struct napi_struct *napi)
+//static void napi_hash_del(struct napi_struct *napi)
 {
 	spin_lock(&napi_hash_lock);
 
@@ -6789,6 +6793,8 @@ static void napi_hash_del(struct napi_struct *napi)
 
 	spin_unlock(&napi_hash_lock);
 }
+/*Young 21_0617*/
+EXPORT_SYMBOL(napi_hash_del);
 
 static enum hrtimer_restart napi_watchdog(struct hrtimer *timer)
 {

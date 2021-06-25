@@ -6,22 +6,72 @@
  */
 
 #include <dt-bindings/gpio/gpio.h>
-#include "armada-7040-db.dtsi"
+#include "armada-7040.dtsi"
 
 / {
-	model = "Marvell Armada 7040 development board default (A) setup";
-	compatible = "marvell,armada7040-db-default", "marvell,armada7040-db",
-		     "marvell,armada7040", "marvell,armada-ap806-quad",
-		     "marvell,armada-ap806";
+	model = "Marvell Armada 7040 DB board";
+	compatible = "marvell,armada7040-db", "marvell,armada7040",
+		     "marvell,armada-ap806-quad", "marvell,armada-ap806";
 
 	chosen {
 		stdout-path = "serial0:115200n8";
+	};
+
+	memory@0 {
+		device_type = "memory";
+		reg = <0x0 0x0 0x0 0x80000000>;
 	};
 
 	aliases {
 		ethernet0 = &cp0_eth0;
 		ethernet1 = &cp0_eth1;
 		ethernet2 = &cp0_eth2;
+	};
+
+	cp0_exp_usb3_0_current_regulator: gpio-regulator {
+		compatible = "regulator-gpio";
+		regulator-name = "cp0-usb3-0-current-regulator";
+		regulator-type = "current";
+		regulator-min-microamp = <500000>;
+		regulator-max-microamp = <900000>;
+		gpios = <&expander0 4 GPIO_ACTIVE_HIGH>;
+		states = <500000 0x0
+			  900000 0x1>;
+		enable-active-high;
+		gpios-states = <0>;
+	};
+
+	cp0_exp_usb3_1_current_regulator: gpio-regulator {
+		compatible = "regulator-gpio";
+		regulator-name = "cp0-usb3-1-current-regulator";
+		regulator-type = "current";
+		regulator-min-microamp = <500000>;
+		regulator-max-microamp = <900000>;
+		gpios = <&expander0 5 GPIO_ACTIVE_HIGH>;
+		states = <500000 0x0
+			  900000 0x1>;
+		enable-active-high;
+		gpios-states = <0>;
+	};
+
+	cp0_reg_usb3_0_vbus: cp0-usb3-0-vbus {
+		compatible = "regulator-fixed";
+		regulator-name = "usb3h0-vbus";
+		regulator-min-microvolt = <5000000>;
+		regulator-max-microvolt = <5000000>;
+		enable-active-high;
+		gpio = <&expander0 0 GPIO_ACTIVE_HIGH>;
+		vin-supply = <&cp0_exp_usb3_0_current_regulator>;
+	};
+
+	cp0_reg_usb3_1_vbus: cp0-usb3-1-vbus {
+		compatible = "regulator-fixed";
+		regulator-name = "usb3h1-vbus";
+		regulator-min-microvolt = <5000000>;
+		regulator-max-microvolt = <5000000>;
+		enable-active-high;
+		gpio = <&expander0 1 GPIO_ACTIVE_HIGH>;
+		vin-supply = <&cp0_exp_usb3_1_current_regulator>;
 	};
 };
 
@@ -32,16 +82,40 @@
 
 &spi0 {
 	status = "okay";
+
+	spi-flash@0 {
+		compatible = "jedec,spi-nor";
+		reg = <0>;
+		spi-max-frequency = <10000000>;
+
+		partitions {
+			compatible = "fixed-partitions";
+			#address-cells = <1>;
+			#size-cells = <1>;
+
+			partition@0 {
+				label = "U-Boot";
+				reg = <0 0x200000>;
+			};
+			partition@400000 {
+				label = "Filesystem";
+				reg = <0x200000 0xce0000>;
+			};
+		};
+	};
 };
 
 &uart0 {
 	status = "okay";
+	pinctrl-0 = <&uart0_pins>;
+	pinctrl-names = "default";
 };
 
 
 &cp0_pcie2 {
 	status = "okay";
 	phys = <&cp0_comphy5 2>;
+	phy-names = "cp0-pcie2-x1-phy";
 };
 
 &cp0_i2c0 {
@@ -77,36 +151,116 @@
 	pinctrl-0 = <&nand_pins>, <&nand_rb>;
 	pinctrl-names = "default";
 
+	nand@0 {
+		reg = <0>;
+		label = "pxa3xx_nand-0";
+		nand-rb = <0>;
+		nand-on-flash-bbt;
+		nand-ecc-strength = <4>;
+		nand-ecc-step-size = <512>;
+
+		partitions {
+			compatible = "fixed-partitions";
+			#address-cells = <1>;
+			#size-cells = <1>;
+
+			partition@0 {
+				label = "U-Boot";
+				reg = <0 0x200000>;
+			};
+
+			partition@200000 {
+				label = "Linux";
+				reg = <0x200000 0xe00000>;
+			};
+
+			partition@1000000 {
+				label = "Filesystem";
+				reg = <0x1000000 0x3f000000>;
+			};
+
+		};
+	};
 };
 
 &cp0_spi1 {
 	status = "okay";
+
+	spi-flash@0 {
+		compatible = "jedec,spi-nor";
+		reg = <0x0>;
+		spi-max-frequency = <20000000>;
+
+		partitions {
+			compatible = "fixed-partitions";
+			#address-cells = <1>;
+			#size-cells = <1>;
+
+			partition@0 {
+				label = "U-Boot";
+				reg = <0x0 0x200000>;
+			};
+
+			partition@400000 {
+				label = "Filesystem";
+				reg = <0x200000 0xe00000>;
+			};
+		};
+	};
 };
 
 &cp0_sata0 {
 	status = "okay";
 
 	sata-port@1 {
-		status = "okay";
-		/* Generic PHY, providing serdes lanes */
 		phys = <&cp0_comphy3 1>;
+		phy-names = "cp0-sata0-1-phy";
+	};
+};
+
+&cp0_utmi {
+	status = "okay";
+};
+
+&cp0_comphy1 {
+	cp0_usbh0_con: connector {
+		compatible = "usb-a-connector";
+		phy-supply = <&cp0_reg_usb3_0_vbus>;
 	};
 };
 
 &cp0_usb3_0 {
+	phys = <&cp0_comphy1 0>, <&cp0_utmi0>;
+	phy-names = "cp0-usb3h0-comphy", "utmi";
+	dr_mode = "host";
 	status = "okay";
 };
 
+&cp0_comphy4 {
+	cp0_usbh1_con: connector {
+		compatible = "usb-a-connector";
+		phy-supply = <&cp0_reg_usb3_1_vbus>;
+	};
+};
+
 &cp0_usb3_1 {
+	phys = <&cp0_comphy4 1>, <&cp0_utmi1>;
+	phy-names = "cp0-usb3h1-comphy", "utmi";
+	dr_mode = "host";
 	status = "okay";
 };
 
 &ap_sdhci0 {
 	status = "okay";
+	bus-width = <4>;
+	no-1-8-v;
+	non-removable;
 };
 
 &cp0_sdhci0 {
 	status = "okay";
+	bus-width = <4>;
+	no-1-8-v;
 	cd-gpios = <&expander0 12 GPIO_ACTIVE_LOW>;
 };
 
@@ -131,8 +285,11 @@
 	phy-mode = "10gbase-kr";
 	/* Generic PHY, providing serdes lanes */
 	phys = <&cp0_comphy2 0>;
-	managed = "in-band-status";
-	sfp = <&sfp_eth0>;
+
+	fixed-link {
+		speed = <10000>;
+		full-duplex;
+	};
 };
 
 &cp0_eth1 {
@@ -148,8 +305,4 @@
 	status = "okay";
 	phy = <&phy1>;
 	phy-mode = "rgmii-id";
-};
-
-&cp0_crypto {
-	status = "okay";
 };

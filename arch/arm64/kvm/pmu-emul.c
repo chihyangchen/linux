@@ -3,7 +3,9 @@
  * Copyright (C) 2015 Linaro Ltd.
  * Author: Shannon Zhao <shannon.zhao@linaro.org>
  */
-
+#include <linux/kern_levels.h>
+ 
+ 
 #include <linux/cpu.h>
 #include <linux/kvm.h>
 #include <linux/kvm_host.h>
@@ -14,6 +16,8 @@
 #include <kvm/arm_pmu.h>
 #include <kvm/arm_vgic.h>
 
+#define young 1
+#define young_pmu_overflow 1
 static void kvm_pmu_create_perf_event(struct kvm_vcpu *vcpu, u64 select_idx);
 static void kvm_pmu_update_pmc_chained(struct kvm_vcpu *vcpu, u64 select_idx);
 static void kvm_pmu_stop_counter(struct kvm_vcpu *vcpu, struct kvm_pmc *pmc);
@@ -386,8 +390,12 @@ static void kvm_pmu_update_state(struct kvm_vcpu *vcpu)
 
 	if (!kvm_vcpu_has_pmu(vcpu))
 		return;
-
+//Young 21_0610 !??
+#if young_pmu_overflow
+	overflow = !kvm_pmu_overflow_status(vcpu);
+	#else
 	overflow = !!kvm_pmu_overflow_status(vcpu);
+#endif
 	if (pmu->irq_level == overflow)
 		return;
 
@@ -668,6 +676,9 @@ static void kvm_pmu_create_perf_event(struct kvm_vcpu *vcpu, u64 select_idx)
 	}
 
 	if (IS_ERR(event)) {
+	#if young
+	printk("Young: file: %s, function: %s line: %d\n",__FILE__, __FUNCTION__, __LINE__);
+	#endif
 		pr_err_once("kvm: pmu event creation failed %ld\n",
 			    PTR_ERR(event));
 		return;
@@ -769,6 +780,9 @@ int kvm_pmu_probe_pmuver(void)
 	if (IS_ERR(event)) {
 		pr_err_once("kvm: pmu event creation failed %ld\n",
 			    PTR_ERR(event));
+	#if young
+	printk("Young: file: %s, function: %s line: %d\n",__FILE__, __FUNCTION__, __LINE__);
+	#endif				
 		return 0xf;
 	}
 

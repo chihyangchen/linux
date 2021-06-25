@@ -1,0 +1,111 @@
+// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
+/*
+ * Copyright (C) 2019 Marvell Technology Group Ltd.
+ *
+ * Device Tree file for Marvell Armada CP115.
+ */
+
+#define CP11X_TYPE cp115
+
+#include "armada-cp11x.dtsi"
+/ {
+	model = "Marvell Extra from 4.14";
+	compatible = "marvell,armada-cp115","marvell,armada-cp11x";
+};
+	&CP11X_LABEL(config_space){
+/*
+    	    CP11X_LABEL(uio_ethernet): EVALUATOR(uio_pp_, CP110_NUM)@0 {
+     	       compatible = "generic-uio";
+    	        reg = <0x0 0x90000>, <0x130000 0x6000>,
+                  <0x220000 0x1000>;
+     	       reg-names = "pp", "mspg", "cm3";
+   		     };
+*/
+/*
+        	CP11X_LABEL(cm3_sram): cm3@220000 {
+            	compatible = "mmio-sram";
+            	reg = <0x220000 0x800>;
+            	#address-cells = <1>;
+           	 	#size-cells = <1>;
+            	ranges = <0 0x220000 0x800>;
+        	};	
+*/
+
+        	CP11X_LABEL(axim_cp_rd): axim-cp-rd@3c5000 {
+            	compatible = "marvell,coresight-axim", "arm,primecell";
+            	reg = <0x3c5000 0x1000>;
+            	clocks = <&CP11X_LABEL(clk) 1 3>;
+            	clock-names = "apb_pclk";
+            	bus-width = <40>;
+            	port@0 { };
+        	};
+        	CP11X_LABEL(axim_cp_wr): axim-cp-wr@3c6000 {
+            	compatible = "marvell,coresight-axim", "arm,primecell";
+            	reg = <0x3c6000 0x1000>;
+            	clocks = <&CP11X_LABEL(clk) 1 3>;
+            	clock-names = "apb_pclk";
+            	bus-width = <40>;
+            	port@0 { };
+        	};
+
+        	CP11X_LABEL(axim_ppv2_rd): axim-ppv2-rd@3c0000 {
+            	compatible = "marvell,coresight-axim", "arm,primecell";
+            	reg = <0x3c0000 0x1000>;
+            	clocks = <&CP11X_LABEL(clk) 1 3>;
+            	clock-names = "apb_pclk";
+            	bus-width = <40>;
+            	port@0 { };
+        	};
+
+        	CP11X_LABEL(axim_ppv2_wr): axim-ppv2-wr@3c1000 {
+            	compatible = "marvell,coresight-axim", "arm,primecell";
+            	reg = <0x3c1000 0x1000>;
+            	clocks = <&CP11X_LABEL(clk) 1 3>;
+            	clock-names = "apb_pclk";
+            	bus-width = <40>;
+            	port@0 { };
+        	};
+
+        	CP11X_LABEL(axim_hb1_rd): axim-hb1-rd@3c8000 {
+            	compatible = "marvell,coresight-axim", "arm,primecell";
+            	reg = <0x3c8000 0x1000>;
+            	clocks = <&CP11X_LABEL(clk) 1 3>;
+            	clock-names = "apb_pclk";
+            	bus-width = <40>;
+            	status = "disabled";
+            	port@0 { };
+        	};
+        	CP11X_LABEL(axim_hb1_wr): axim-hb1-wr@3c9000 {
+            	compatible = "marvell,coresight-axim", "arm,primecell";
+            	reg = <0x3c9000 0x1000>;
+            	clocks = <&CP11X_LABEL(clk) 1 3>;
+            	clock-names = "apb_pclk";
+            	bus-width = <40>;
+            	status = "disabled";
+            	port@0 { };
+        	};
+
+        	//CP11X_LABEL(thermal): thermal@400078 {
+            //	compatible = "marvell,armada-cp110-thermal";
+            //	reg = <0x400078 0x4>,
+            //	<0x400070 0x8>;
+        	//};
+
+
+        	CP11X_LABEL(uio_xor0) {
+            	compatible = "marvell,uio-xor-v2";
+            	xor_access = <&CP11X_LABEL(xor0)>;
+        	};
+
+        	CP11X_LABEL(uio_xor1) {
+            	compatible = "marvell,uio-xor-v2";
+            	xor_access = <&CP11X_LABEL(xor1)>;
+        	};
+
+
+	};
+//&cp0_ethernet{
+//    cm3-mem = <&CP11X_LABEL(cm3_sram)>;
+//}
+
+#undef CP11X_TYPE

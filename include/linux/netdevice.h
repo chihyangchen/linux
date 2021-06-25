@@ -511,7 +511,9 @@ int dev_set_threaded(struct net_device *dev, bool threaded);
 void napi_disable(struct napi_struct *n);
 
 void napi_enable(struct napi_struct *n);
-
+/*Young 21_0617 from net/core/dev.c */
+void napi_hash_del(struct napi_struct *napi);
+void napi_hash_add(struct napi_struct *napi);
 /**
  *	napi_synchronize - wait until NAPI is not running
  *	@n: NAPI context

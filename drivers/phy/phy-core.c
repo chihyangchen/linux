@@ -513,6 +513,22 @@ int phy_validate(struct phy *phy, enum phy_mode mode, int submode,
 }
 EXPORT_SYMBOL_GPL(phy_validate);
 
+/*Young 21_0621 copy from marvell 4.14 vendor*/
+int phy_send_command(struct phy *phy, u32 command)
+{
+    int ret;
+
+    if (!phy || !phy->ops->send_command)
+        return 0;
+
+    mutex_lock(&phy->mutex);
+    ret = phy->ops->send_command(phy, command);
+    mutex_unlock(&phy->mutex);
+
+    return ret;
+}
+EXPORT_SYMBOL_GPL(phy_send_command);
+
 /**
  * _of_phy_get() - lookup and obtain a reference to a phy by phandle
  * @np: device_node for which to get the phy

@@ -9,7 +9,6 @@
  */
 
 #include <dt-bindings/interrupt-controller/arm-gic.h>
-#include <dt-bindings/phy/phy-utmi-mvebu.h>
 
 / {
 	model = "Marvell Armada 37xx SoC";
@@ -19,8 +18,6 @@
 	#size-cells = <2>;
 
 	aliases {
-		ethernet0 = &eth0;
-		ethernet1 = &eth1;
 		serial0 = &uart0;
 		serial1 = &uart1;
 	};
@@ -38,11 +35,6 @@
 			reg = <0 0x4000000 0 0x200000>;
 			no-map;
 		};
-
-		tee@4400000 {
-			reg = <0 0x4400000 0 0x1000000>;
-			no-map;
-		};
 	};
 
 	cpus {
@@ -50,7 +42,7 @@
 		#size-cells = <0>;
 		cpu0: cpu@0 {
 			device_type = "cpu";
-			compatible = "arm,cortex-a53", "arm,armv8";
+			compatible = "arm,cortex-a53";
 			reg = <0>;
 			clocks = <&nb_periph_clk 16>;
 			enable-method = "psci";
@@ -87,12 +79,18 @@
 			compatible = "simple-bus";
 			/* 32M internal register @ 0xd000_0000 */
 			ranges = <0x0 0x0 0xd0000000 0x2000000>;
-			dma-coherent;
 
-			wdt: watchdog-timer@8300 {
+			wdt: watchdog@8300 {
 				compatible = "marvell,armada-3700-wdt";
-				reg = <0xd064 0x4>, <0x8300 0x40>;
+				reg = <0x8300 0x40>;
+				marvell,system-controller = <&cpu_misc>;
 				clocks = <&xtalclk>;
+			};
+
+			cpu_misc: system-controller@d000 {
+				compatible = "marvell,armada-3700-cpu-misc",
+					     "syscon";
+				reg = <0xd000 0x1000>;
 			};
 
 			spi0: spi@10600 {
@@ -157,13 +155,9 @@
 				status = "disabled";
 			};
 
-			uio-sam {
-				compatible = "marvell,uio-sam";
-				eip_access = <&crypto>;
-			};
-
 			nb_periph_clk: nb-periph-clk@13000 {
-				compatible = "marvell,armada-3700-periph-clock-nb";
+				compatible = "marvell,armada-3700-periph-clock-nb",
+					     "syscon";
 				reg = <0x13000 0x100>;
 				clocks = <&tbg 0>, <&tbg 1>, <&tbg 2>,
 				<&tbg 3>, <&xtalclk>;
@@ -176,31 +170,6 @@
 				clocks = <&tbg 0>, <&tbg 1>, <&tbg 2>,
 				<&tbg 3>, <&xtalclk>;
 				#clock-cells = <1>;
-			};
-
-			a3700_comphy: comphy@18300 {
-				compatible = "marvell,comphy-a3700";
-				reg = <0x18300 0x300>, <0x1f000 0x1000>,
-				      <0x5c000 0x1000>, <0xe0178 0x8>;
-				reg-names = "comphy", "serdes",
-					    "usb3_gbe1_phy", "indirect_ahci";
-				#address-cells = <1>;
-				#size-cells = <0>;
-
-				a3700_comphy0: phy@0 {
-					reg = <0>;
-					#phy-cells = <1>;
-				};
-
-				a3700_comphy1: phy@1 {
-					reg = <1>;
-					#phy-cells = <1>;
-				};
-
-				a3700_comphy2: phy@2 {
-					reg = <2>;
-					#phy-cells = <1>;
-				};
 			};
 
 			tbg: tbg@13200 {
@@ -247,6 +216,11 @@
 					function = "spi";
 				};
 
+				spi_cs1_pins: spi-cs1-pins {
+					groups = "spi_cs1";
+					function = "spi";
+				};
+
 				i2c1_pins: i2c1-pins {
 					groups = "i2c1";
 					function = "i2c";
@@ -279,6 +253,35 @@
 				reg = <0x14000 0x60>;
 			};
 
+			comphy: phy@18300 {
+				compatible = "marvell,comphy-a3700";
+				reg = <0x18300 0x300>,
+				      <0x1F000 0x400>,
+				      <0x5C000 0x400>,
+				      <0xe0178 0x8>;
+				reg-names = "comphy",
+					    "lane1_pcie_gbe",
+					    "lane0_usb3_gbe",
+					    "lane2_sata_usb3";
+				#address-cells = <1>;
+				#size-cells = <0>;
+
+				comphy0: phy@0 {
+					reg = <0>;
+					#phy-cells = <1>;
+				};
+
+				comphy1: phy@1 {
+					reg = <1>;
+					#phy-cells = <1>;
+				};
+
+				comphy2: phy@2 {
+					reg = <2>;
+					#phy-cells = <1>;
+				};
+			};
+
 			pinctrl_sb: pinctrl@18800 {
 				compatible = "marvell,armada3710-sb-pinctrl",
 					     "syscon", "simple-mfd";
@@ -303,11 +306,25 @@
 					function = "mii";
 				};
 
+				smi_pins: smi-pins {
+					groups = "smi";
+					function = "smi";
+				};
+
 				sdio_pins: sdio-pins {
 					groups = "sdio_sb";
 					function = "sdio";
 				};
 
+				pcie_reset_pins: pcie-reset-pins {
+					groups = "pcie1"; /* this actually controls "pcie1_reset" */
+					function = "gpio";
+				};
+
+				pcie_clkreq_pins: pcie-clkreq-pins {
+					groups = "pcie1_clkreq";
+					function = "pcie";
+				};
 			};
 
 			eth0: ethernet@30000 {
@@ -316,7 +333,6 @@
 				   interrupts = <GIC_SPI 42 IRQ_TYPE_LEVEL_HIGH>;
 				   clocks = <&sb_periph_clk 8>;
 				   status = "disabled";
-				   musdk-status = "private";
 			};
 
 			mdio: mdio@32004 {
@@ -332,45 +348,54 @@
 				interrupts = <GIC_SPI 45 IRQ_TYPE_LEVEL_HIGH>;
 				clocks = <&sb_periph_clk 7>;
 				status = "disabled";
-				musdk-status = "private";
-			};
-
-			uio_neta_0 {
-				compatible = "generic-uio";
-				reg = <0x30000 0x4000>;
-				reg-names = "neta_regs";
-				status = "okay";
-			};
-
-			uio_neta_1 {
-				compatible = "generic-uio";
-				reg = <0x40000 0x4000>;
-				reg-names = "neta_regs";
-				status = "okay";
 			};
 
 			usb3: usb@58000 {
 				compatible = "marvell,armada3700-xhci",
 				"generic-xhci";
 				reg = <0x58000 0x4000>;
+				marvell,usb-misc-reg = <&usb32_syscon>;
 				interrupts = <GIC_SPI 3 IRQ_TYPE_LEVEL_HIGH>;
 				clocks = <&sb_periph_clk 12>;
+				phys = <&comphy0 0>, <&usb2_utmi_otg_phy>;
+				phy-names = "usb3-phy", "usb2-utmi-otg-phy";
 				status = "disabled";
+			};
+
+			usb2_utmi_otg_phy: phy@5d000 {
+				compatible = "marvell,a3700-utmi-otg-phy";
+				reg = <0x5d000 0x800>;
+				marvell,usb-misc-reg = <&usb32_syscon>;
+				#phy-cells = <0>;
+			};
+
+			usb32_syscon: system-controller@5d800 {
+				compatible = "marvell,armada-3700-usb2-host-device-misc",
+				"syscon";
+				reg = <0x5d800 0x800>;
 			};
 
 			usb2: usb@5e000 {
 				compatible = "marvell,armada-3700-ehci";
 				reg = <0x5e000 0x1000>;
+				marvell,usb-misc-reg = <&usb2_syscon>;
 				interrupts = <GIC_SPI 17 IRQ_TYPE_LEVEL_HIGH>;
+				phys = <&usb2_utmi_host_phy>;
+				phy-names = "usb2-utmi-host-phy";
 				status = "disabled";
 			};
 
-			utmi_usb2: utmi@5f000 {
-				compatible = "marvell,armada-3700-utmi-phy";
-				reg = <0x5f000 0x1000>;
-				utmi-port = <UTMI_PHY_TO_USB2_HOST0>;
+			usb2_utmi_host_phy: phy@5f000 {
+				compatible = "marvell,a3700-utmi-host-phy";
+				reg = <0x5f000 0x800>;
+				marvell,usb-misc-reg = <&usb2_syscon>;
 				#phy-cells = <0>;
-				status = "disabled";
+			};
+
+			usb2_syscon: system-controller@5f800 {
+				compatible = "marvell,armada-3700-usb2-host-misc",
+				"syscon";
+				reg = <0x5f800 0x800>;
 			};
 
 			xor@60900 {
@@ -398,10 +423,16 @@
 				interrupt-names = "mem", "ring0", "ring1",
 						  "ring2", "ring3", "eip";
 				clocks = <&nb_periph_clk 15>;
-				cell-index = <0>;
 			};
 
-			sdhci0: sdhci@d0000 {
+			rwtm: mailbox@b0000 {
+				compatible = "marvell,armada-3700-rwtm-mailbox";
+				reg = <0xb0000 0x100>;
+				interrupts = <GIC_SPI 18 IRQ_TYPE_LEVEL_HIGH>;
+				#mbox-cells = <1>;
+			};
+
+			sdhci1: sdhci@d0000 {
 				compatible = "marvell,armada-3700-sdhci",
 					     "marvell,sdhci-xenon";
 				reg = <0xd0000 0x300>,
@@ -412,7 +443,7 @@
 				status = "disabled";
 			};
 
-			sdhci1: sdhci@d8000 {
+			sdhci0: sdhci@d8000 {
 				compatible = "marvell,armada-3700-sdhci",
 					     "marvell,sdhci-xenon";
 				reg = <0xd8000 0x300>,
@@ -427,6 +458,9 @@
 				compatible = "marvell,armada-3700-ahci";
 				reg = <0xe0000 0x178>;
 				interrupts = <GIC_SPI 27 IRQ_TYPE_LEVEL_HIGH>;
+				clocks = <&nb_periph_clk 1>;
+				phys = <&comphy2 0>;
+				phy-names = "sata-phy";
 				status = "disabled";
 			};
 
@@ -440,10 +474,6 @@
 				      <0x1d90000 0x2000>,  /* GICH */
 				      <0x1da0000 0x20000>; /* GICV */
 				interrupts = <GIC_PPI 9 IRQ_TYPE_LEVEL_HIGH>;
-			};
-
-			musdk_cma {
-				compatible = "marvell,musdk-cma";
 			};
 		};
 
@@ -459,7 +489,6 @@
 			#interrupt-cells = <1>;
 			msi-parent = <&pcie0>;
 			msi-controller;
-			dma-coherent;
 			ranges = <0x82000000 0 0xe8000000   0 0xe8000000 0 0x1000000 /* Port 0 MEM */
 				  0x81000000 0 0xe9000000   0 0xe9000000 0 0x10000>; /* Port 0 IO*/
 			interrupt-map-mask = <0 0 0 7>;
@@ -467,18 +496,12 @@
 					<0 0 0 2 &pcie_intc 1>,
 					<0 0 0 3 &pcie_intc 2>,
 					<0 0 0 4 &pcie_intc 3>;
+			max-link-speed = <2>;
+			phys = <&comphy1 0>;
 			pcie_intc: interrupt-controller {
 				interrupt-controller;
 				#interrupt-cells = <1>;
 			};
-		};
-	};
-
-	firmware {
-		optee {
-			compatible = "linaro,optee-tz";
-			method = "smc";
-			status = "okay";
 		};
 	};
 };

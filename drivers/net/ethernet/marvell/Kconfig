@@ -91,6 +91,14 @@ config MVPP2
 	help
 	  This driver supports the network interface units in the
 	  Marvell ARMADA 375, 7K and 8K SoCs.
+#Young 21_0616 from 4.14 vendor
+config MVPP2X
+	tristate "Marvell Armada 375/70xx/80xx network inteface support"
+	depends on ARCH_MVEBU
+	select MVMDIO
+	help
+		This driver suports the network interface units in the 
+		Marvell Armada 375/70xx/80xx Soc series.
 
 config MVPP2_PTP
 	bool "Marvell Armada 8K Enable PTP support"

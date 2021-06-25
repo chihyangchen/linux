@@ -3,7 +3,7 @@
  * Copyright (C) 2012 - Virtual Open Systems and Columbia University
  * Author: Christoffer Dall <c.dall@virtualopensystems.com>
  */
-
+#include <linux/kern_levels.h>
 #include <linux/bug.h>
 #include <linux/cpu_pm.h>
 #include <linux/errno.h>
@@ -45,7 +45,7 @@
 #ifdef REQUIRES_VIRT
 __asm__(".arch_extension	virt");
 #endif
-
+#define young 1
 static enum kvm_mode kvm_mode = KVM_MODE_DEFAULT;
 DEFINE_STATIC_KEY_FALSE(kvm_protected_mode_initialized);
 
@@ -747,18 +747,23 @@ int kvm_arch_vcpu_ioctl_run(struct kvm_vcpu *vcpu)
 		 * non-preemptible context.
 		 */
 		preempt_disable();
-
+	#if young
+	printk("Young: file: %s, function: %s line: %d\n",__FILE__, __FUNCTION__, __LINE__);
+	#endif
 		kvm_pmu_flush_hwstate(vcpu);
 
-		local_irq_disable();
+		//local_irq_disable();
 
 		kvm_vgic_flush_hwstate(vcpu);
-
+		local_irq_disable();
 		/*
 		 * Exit if we have a signal pending so that we can deliver the
 		 * signal to user space.
 		 */
 		if (signal_pending(current)) {
+				#if young
+			printk("Young: file: %s, function: %s line: %d\n",__FILE__, __FUNCTION__, __LINE__);
+			#endif
 			ret = -EINTR;
 			run->exit_reason = KVM_EXIT_INTR;
 		}
@@ -773,6 +778,9 @@ int kvm_arch_vcpu_ioctl_run(struct kvm_vcpu *vcpu)
 		if (static_branch_unlikely(&userspace_irqchip_in_use)) {
 			if (kvm_timer_should_notify_user(vcpu) ||
 			    kvm_pmu_should_notify_user(vcpu)) {
+					#if young
+					printk("Young: file: %s, function: %s line: %d\n",__FILE__, __FUNCTION__, __LINE__);
+					#endif	
 				ret = -EINTR;
 				run->exit_reason = KVM_EXIT_INTR;
 			}
@@ -823,7 +831,9 @@ int kvm_arch_vcpu_ioctl_run(struct kvm_vcpu *vcpu)
 		 * interrupt line.
 		 */
 		kvm_pmu_sync_hwstate(vcpu);
-
+	#if young
+	printk("Young: file: %s, function: %s line: %d\n",__FILE__, __FUNCTION__, __LINE__);
+	#endif
 		/*
 		 * Sync the vgic state before syncing the timer state because
 		 * the timer code needs to know if the virtual timer

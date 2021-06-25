@@ -1,6 +1,0 @@
-cn9130-crb.dtsi:                compatible = jedec,spi-nor;
-cn9130-crb.dtsi:                        compatible = fixed-partitions
-armada-ap80x.dtsi:                              compatible = arm,mmu-500
-armada-ap80x.dtsi:                              compatible = marvell,armada-ap806-sdhci
-armada-ap807.dtsi:                                      compatible = marvell,ap807-cpu-clock
-armada-ap807.dtsi:      compatible = marvell,armada-ap807-sdhci

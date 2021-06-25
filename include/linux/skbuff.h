@@ -791,6 +791,8 @@ struct sk_buff {
 				fclone:2,
 				peeked:1,
 				head_frag:1,
+			/*Young 21_0621 to fit the marvell mvpp2x*/
+				xmit_more:1,
 				pfmemalloc:1;
 #ifdef CONFIG_SKB_EXTENSIONS
 	__u8			active_extensions;
