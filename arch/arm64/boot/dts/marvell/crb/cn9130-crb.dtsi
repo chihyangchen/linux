@@ -119,7 +119,12 @@
 
 		5gmodule { /* disable airplane mode */
 			gpio-hog;
-			gpios = <4 1>;
+			gpios = <4 0>;
+			output-high;
+		};
+		pcie_disable_defualt_high {
+			gpio-hog;
+			gpios = <9 0>;
 			output-high;
 		};
 	};

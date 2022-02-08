@@ -386,6 +386,9 @@ struct mhi_controller {
 	size_t rddm_size;
 	size_t sbl_size;
 	size_t seg_len;
+	/*Young 5.16*/
+	size_t reg_len;
+	
 	struct image_info *fbc_image;
 	struct image_info *rddm_image;
 	struct mhi_chan *mhi_chan;
@@ -658,6 +661,20 @@ int mhi_pm_suspend(struct mhi_controller *mhi_cntrl);
  * @mhi_cntrl: MHI controller
  */
 int mhi_pm_resume(struct mhi_controller *mhi_cntrl);
+
+/*Young 5.16*/
+/**
+ * mhi_pm_resume_force - Force resume MHI from suspended state
+ * @mhi_cntrl: MHI controller
+ *
+ * Resume the device irrespective of its MHI state. As per the MHI spec, devices
+ * has to be in M3 state during resume. But some devices seem to be in a
+ * different MHI state other than M3 but they continue working fine if allowed.
+ * This API is intented to be used for such devices.
+ *
+ * Return: 0 if the resume succeeds, a negative error code otherwise
+ */
+int mhi_pm_resume_force(struct mhi_controller *mhi_cntrl);
 
 /**
  * mhi_download_rddm_image - Download ramdump image from device for
